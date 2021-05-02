@@ -88,3 +88,33 @@ exports.isUnique = ({ entities, value, attribute }) => {
     }
   })
 };
+
+exports.lengthRegexp = ({ length }) => {
+  // Test length
+  // Integer
+  // Length is between 1 and 200
+  const regExp = /^([1-9][0-9]?|[1][0-9][0-9]|200)$/;
+  
+  return regExp.test(length);
+};
+
+exports.nameRegexp = ({ name }) => {
+  // Test name
+  // Length of name is less than 20
+  // No symbols except space
+  name = name.replace(/\s{2,}/g, ' ');
+  const regExp = /^[a-zA-Z0-9 ]{1,20}$/;
+
+  return regExp.test(name);
+};
+
+exports.typeRegexp = ({ type }) => {
+  // Test type
+  // Length of type is less than 10
+  // No symbols except space
+  // No numbers
+  type = type.replace(/\s{2,}/g, ' ');
+  const regExp = /^[a-zA-Z ]{1,10}$/;
+
+  return regExp.test(type);
+}

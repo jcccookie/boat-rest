@@ -1,8 +1,7 @@
 const { Router } = require('express');
 const { ds, getEntityId } = require('../datastore');
 const { BOAT } = require('../datastoreConfig');
-const { boatResponse, verifyAccept, verifyContentType, checkLength, hasId, isUnique, throwError } = require('./function');
-const path = require('path');
+const { boatResponse, verifyAccept, verifyContentType, checkLength, hasId, isUnique, throwError, lengthRegexp, nameRegexp, typeRegexp } = require('./helpers');
 
 const router = new Router();
 const datastore = ds();
@@ -17,19 +16,30 @@ router.post('/', async (req, res, next) => {
     verifyAccept({ req, type: "application/json" });
     verifyContentType({ req, type: "application/json" });
     checkLength({ req, action: 'ne', length: 3 });
-    
-    // Try to use Reg Expressions!
-    // Check the attribute "length"
-    // Length is integer
-    // Length is integer and less than 1
-    // Length is integer and greater than 200
-    
-    // Check the attribute "name"
 
-    // Check the attribute "type"
+    const isLengthValid = lengthRegexp({ length: req.body.length });
+    if (!isLengthValid) {
+      throw throwError({
+        code: 400,
+        message: "Length of the boat is invalid"
+      })
+    }
 
-    // Check if the name of the boat is unique
+    const isNameValid = nameRegexp({ name: req.body.name });
+    if (!isNameValid) {
+      throw throwError({
+        code: 400,
+        message: "Name of the boat is invalid"
+      })
+    }
 
+    const isTypeValid = typeRegexp({ type: req.body.type });
+    if (!isTypeValid) {
+      throw throwError({
+        code: 400,
+        message: "Type of the boat is invalid"
+      })
+    }
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);

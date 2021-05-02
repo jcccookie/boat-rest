@@ -87,6 +87,7 @@ router.get('/:boat_id', async (req, res, next) => {
     if (accepts === "application/json") {
       res.send(boat);
     } else if (accepts === "text/html") {
+      // Send json to .pug
       res.render('boat', {
         id: getEntityId(boatEntity[0]),
         name: boatEntity[0].name,

@@ -38,7 +38,7 @@ exports.verifyContentType = ({ req, type }) => {
   return;
 };
 
-exports.checkLength = ({ req, length, action }) => {
+exports.checkNumOfAttribute = ({ req, length, action }) => {
   switch (action) {
     case 'ne':
       if (Object.keys(req.body).length !== length) {
@@ -89,7 +89,7 @@ exports.isUnique = ({ entities, value, attribute }) => {
   })
 };
 
-exports.lengthRegexp = ({ length }) => {
+const lengthRegexp = ({ length }) => {
   // Test length
   // Integer
   // Length is between 1 and 200
@@ -98,7 +98,7 @@ exports.lengthRegexp = ({ length }) => {
   return regExp.test(length);
 };
 
-exports.nameRegexp = ({ name }) => {
+const nameRegexp = ({ name }) => {
   // Test name
   // Length of name is less than 20
   // No symbols except space
@@ -108,7 +108,7 @@ exports.nameRegexp = ({ name }) => {
   return regExp.test(name);
 };
 
-exports.typeRegexp = ({ type }) => {
+const typeRegexp = ({ type }) => {
   // Test type
   // Length of type is less than 10
   // No symbols except space
@@ -118,3 +118,32 @@ exports.typeRegexp = ({ type }) => {
 
   return regExp.test(type);
 }
+
+exports.validateData = ({ req }) => {
+  let message = "Boat information is invalid in the following attribute: ";
+  let properties = [];
+
+  const isLengthValid = lengthRegexp({ length: req.body.length });
+  if (!isLengthValid) {
+    properties.push("Length");
+  }
+
+  const isNameValid = nameRegexp({ name: req.body.name });
+  if (!isNameValid) {
+    properties.push("Name");
+  }
+
+  const isTypeValid = typeRegexp({ type: req.body.type });
+  if (!isTypeValid) {
+    properties.push("Type");
+  }
+
+  if (properties.length > 0) {
+    throw this.throwError({
+      code: 400,
+      message: message + properties.join(", ")
+    });
+  } else {
+    return;
+  }
+};

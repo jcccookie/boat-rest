@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { ds, getEntityId } = require('../datastore');
 const { BOAT } = require('../datastoreConfig');
-const { boatResponse, verifyAccept, verifyContentType, checkLength, hasId, isUnique, throwError, lengthRegexp, nameRegexp, typeRegexp } = require('./helpers');
+const { boatResponse, verifyAccept, verifyContentType, checkNumOfAttribute, hasId, isUnique, throwError, validateData } = require('./helpers');
 
 const router = new Router();
 const datastore = ds();
@@ -15,31 +15,8 @@ router.post('/', async (req, res, next) => {
     // Throwing errors
     verifyAccept({ req, type: "application/json" });
     verifyContentType({ req, type: "application/json" });
-    checkLength({ req, action: 'ne', length: 3 });
-
-    const isLengthValid = lengthRegexp({ length: req.body.length });
-    if (!isLengthValid) {
-      throw throwError({
-        code: 400,
-        message: "Length of the boat is invalid"
-      })
-    }
-
-    const isNameValid = nameRegexp({ name: req.body.name });
-    if (!isNameValid) {
-      throw throwError({
-        code: 400,
-        message: "Name of the boat is invalid"
-      })
-    }
-
-    const isTypeValid = typeRegexp({ type: req.body.type });
-    if (!isTypeValid) {
-      throw throwError({
-        code: 400,
-        message: "Type of the boat is invalid"
-      })
-    }
+    checkNumOfAttribute({ req, action: 'ne', length: 3 });
+    validateData({ req });
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);
@@ -129,7 +106,7 @@ router.patch('/:boat_id', async (req, res, next) => {
     verifyAccept({ req, type: "application/json" });
     verifyContentType({ req, type: "application/json" });    
     hasId({ id: req.body.id });
-    checkLength({ req, action: 'gt', length: 3 })
+    checkNumOfAttribute({ req, action: 'gt', length: 3 });
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);
@@ -185,7 +162,7 @@ router.put('/:boat_id', async (req, res, next) => {
     verifyAccept({ req, type: "application/json" });
     verifyContentType({ req, type: "application/json" });    
     hasId({ id: req.body.id });
-    checkLength({ req, action: 'ne', length: 3 });
+    checkNumOfAttribute({ req, action: 'ne', length: 3 });
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);

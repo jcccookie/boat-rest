@@ -35,6 +35,7 @@ exports.verifyContentType = ({ req, type }) => {
       message: `Server only accepts ${type} data`
     })
   }
+  return;
 };
 
 exports.checkLength = ({ req, length, action }) => {

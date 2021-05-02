@@ -1,7 +1,8 @@
 const { Router } = require('express');
-const { ds, getEntityId } = require('./datastore');
-const { BOAT } = require('./datastoreConfig');
-const { boatResponse, verifyAccept, verifyContentType, checkLength, hasId, isUnique } = require('./function');
+const { ds, getEntityId } = require('../datastore');
+const { BOAT } = require('../datastoreConfig');
+const { boatResponse, verifyAccept, verifyContentType, checkLength, hasId, isUnique, throwError } = require('./function');
+const path = require('path');
 
 const router = new Router();
 const datastore = ds();
@@ -12,12 +13,9 @@ const url = process.env.APP_URL;
 // Create a Boat
 router.post('/', async (req, res, next) => {
   try {
-    // Check if client accepts application/json
+    // Throwing errors
     verifyAccept({ req, type: "application/json" });
-
-    // Check if Content-Type is JSON
     verifyContentType({ req, type: "application/json" });
-
     checkLength({ req, action: 'ne', length: 3 });
     
     // Try to use Reg Expressions!
@@ -69,20 +67,46 @@ router.post('/', async (req, res, next) => {
 // View a Boat
 router.get('/:boat_id', async (req, res, next) => {
   try {
+    // Accepts Headers of the client
+    const accepts = req.accepts(["application/json", "text/html"]);
+
+    // Check if the client accepts JSON or HTML
+    if (!accepts) {
+      throw throwError({
+        code: 406,
+        message: "Server only sends application/json or text/html"
+      })
+    }
+
     const key = datastore.key([BOAT, parseInt(req.params.boat_id, 10)]);
 
-    datastore.get(key, (err, entity) => {
-      if (!err && !entity) {
-        res.status(404).send({ Error: "No boat with this boat_id exists" });
-      } else {
-        const id = getEntityId(entity);
-        const { name, type, length } = entity;
+    const boatEntity = await datastore.get(key);
+    if (boatEntity[0] === undefined) {
+      throw throwError({
+        code: 404,
+        message: "No boat with this boat_id exists"
+      })
+    }
 
-        res
-          .status(200)
-          .send(boatResponse({ id, name, type, length }));
-      }
-    });
+    res.status(200);
+
+    const boat = boatResponse({
+      id: getEntityId(boatEntity[0]),
+      name: boatEntity[0].name,
+      type: boatEntity[0].type,
+      length: boatEntity[0].length
+    })
+
+    if (accepts === "application/json") {
+      res.send(boat);
+    } else if (accepts === "text/html") {
+      res.render('boat', {
+        id: getEntityId(boatEntity[0]),
+        name: boatEntity[0].name,
+        type: boatEntity[0].type,
+        length: boatEntity[0].length
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -91,15 +115,10 @@ router.get('/:boat_id', async (req, res, next) => {
 // Edit part of boat
 router.patch('/:boat_id', async (req, res, next) => {
   try {
-    // Check if client accepts application/json
+    // Throwing errors
     verifyAccept({ req, type: "application/json" });
-
-    // Check if Content-Type is JSON
     verifyContentType({ req, type: "application/json" });    
-
-    // Updating the id is not allowed
     hasId({ id: req.body.id });
-
     checkLength({ req, action: 'gt', length: 3 })
 
     // Get all boat to check if the uniqueness of the name of the boat
@@ -152,15 +171,10 @@ router.patch('/:boat_id', async (req, res, next) => {
 // Edit a entire boat
 router.put('/:boat_id', async (req, res, next) => {
   try {
-    // Check if client accepts application/json
+    // Throwing errors
     verifyAccept({ req, type: "application/json" });
-
-    // Check if Content-Type is JSON
     verifyContentType({ req, type: "application/json" });    
-
-    // Updating the id is not allowed
     hasId({ id: req.body.id });
-
     checkLength({ req, action: 'ne', length: 3 });
 
     // Get all boat to check if the uniqueness of the name of the boat
@@ -231,7 +245,7 @@ router.delete('/:boat_id', async (req, res, next) => {
 // PUT on root boat url is not allowed. There's no such support on this API
 router.put('/', (req, res, next) => {
   try {
-    res.set('Accept', 'POST');
+    res.set('Accept', 'POST, GET');
     res.status(405).send({ Error: "PUT method is not allowed for root boat url" });
   } catch (error) {
     next(error);
@@ -241,7 +255,7 @@ router.put('/', (req, res, next) => {
 // DELETE on root boat url is not allowed. There's no such support on this API
 router.delete('/', (req, res, next) => {
   try {
-    res.set('Accept', 'POST');
+    res.set('Accept', 'POST, GET');
     res.status(405).send({ Error: "DELETE method is not allowed for root boat url" });
   } catch (error) {
     next(error);

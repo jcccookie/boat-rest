@@ -4,11 +4,12 @@ const bodyParser = require('body-parser');
 const app = express();
 app.enable('trust proxy');
 app.use(bodyParser.json());
+app.set('view engine', 'pug');
 
-const boatRouter = require('./boat');
+const boatRouter = require('./api/boat');
 
 app.get('/', (req, res) => {
-  res.send('hello world');
+  res.send('Boat and the Rest!');
 });
 
 app.use('/boats', boatRouter);

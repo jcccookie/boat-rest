@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { ds, getEntityId } = require('../datastore');
 const { BOAT } = require('../datastoreConfig');
-const { boatResponse, verifyAccept, verifyContentType, checkNumOfAttribute, hasId, isUnique, throwError, validateData } = require('./helpers');
+const { boatResponse, verifyAccept, verifyContentType, checkNumOfAttribute, hasId, isUnique, throwError, validateData, checkProperty } = require('./helpers');
 
 const router = new Router();
 const datastore = ds();
@@ -16,6 +16,7 @@ router.post('/', async (req, res, next) => {
     verifyAccept({ req, type: "application/json" });
     verifyContentType({ req, type: "application/json" });
     checkNumOfAttribute({ req, action: 'ne', length: 3 });
+    checkProperty({ req });
     validateData({ req });
 
     // Get all boat to check if the uniqueness of the name of the boat
@@ -23,11 +24,7 @@ router.post('/', async (req, res, next) => {
     const entities = await datastore.runQuery(query);
 
     // Check if the name is unique
-    try {
-      isUnique({ entities: entities[0], value: req.body.name, attribute: "name" });
-    } catch (error) {
-      throw error;
-    }
+    isUnique({ entities: entities[0], value: req.body.name, attribute: "name" }); 
 
     const key = datastore.key(BOAT);
     const entity = {
@@ -108,6 +105,8 @@ router.patch('/:boat_id', async (req, res, next) => {
     verifyContentType({ req, type: "application/json" });    
     hasId({ id: req.body.id });
     checkNumOfAttribute({ req, action: 'gt', length: 3 });
+    checkNumOfAttribute({ req, action: 'lt', length: 1 });
+    checkProperty({ req });
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);
@@ -115,11 +114,7 @@ router.patch('/:boat_id', async (req, res, next) => {
 
     // Check if the name is unique
     if (req.body.name) {
-      try {
-        isUnique({ entities: entities[0], value: req.body.name, attribute: "name" });
-      } catch (error) {
-        throw error;
-      }
+      isUnique({ entities: entities[0], value: req.body.name, attribute: "name" });
     }
 
     // Retrieve the Boat from datastore so we can partial update
@@ -164,17 +159,14 @@ router.put('/:boat_id', async (req, res, next) => {
     verifyContentType({ req, type: "application/json" });    
     hasId({ id: req.body.id });
     checkNumOfAttribute({ req, action: 'ne', length: 3 });
+    checkProperty({ req });
 
     // Get all boat to check if the uniqueness of the name of the boat
     const query = datastore.createQuery(BOAT);
     const entities = await datastore.runQuery(query);
 
     // Check if the name is unique
-    try {
-      isUnique({ entities: entities[0], value: req.body.name, attribute: "name" });
-    } catch (error) {
-      throw error;
-    }
+    isUnique({ entities: entities[0], value: req.body.name, attribute: "name" });
 
     // Retrieve the Boat from datastore so we can update an entire boat
     const key = datastore.key([BOAT, parseInt(req.params.boat_id, 10)]);

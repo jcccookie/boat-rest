@@ -69,6 +69,21 @@ exports.checkNumOfAttribute = ({ req, length, action }) => {
   }
 };
 
+exports.checkProperty = ({ req }) => {
+  const properties = ["name", "type", "length"];
+
+  for (const property in req.body) {
+    const hasProperty = properties.includes(property);
+
+    if (!hasProperty) {
+      throw this.throwError({
+        code: 400,
+        message: `This property (${property}) is not allowed in a boat`
+      })
+    } 
+  }
+};
+
 exports.hasId = ({ id }) => {
   if (id) {
     throw this.throwError({
